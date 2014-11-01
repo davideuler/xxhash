@@ -23,8 +23,9 @@
 # xxHash.exe : benchmark program, to demonstrate xxHash speed
 # ################################################################
 
-CC=gcc
-CFLAGS+= -I. -std=c99 -O3 -Wall -Wextra -Wundef -Wshadow -Wstrict-prototypes
+CC     := $(CC)
+CFLAGS ?= -O3
+CFLAGS += -I. -std=c99 -Wall -Wextra -Wundef -Wshadow -Wstrict-prototypes
 
 
 # Define *.exe as extension for Windows systems
@@ -34,28 +35,30 @@ else
 EXT =
 endif
 
+
 default: xxhsum
 
 all: xxhsum xxhsum32
 
-xxhsum: xxhash.c bench.c
+xxhsum: xxhash.c xxhsum.c
 	$(CC)      $(CFLAGS) $^ -o $@$(EXT)
 	ln -sf $@ xxh32sum
 	ln -sf $@ xxh64sum
 
-xxhsum32: xxhash.c bench.c
+xxhsum32: xxhash.c xxhsum.c
 	$(CC) -m32 $(CFLAGS) $^ -o $@$(EXT)
 
 test: $(TEST_TARGETS)
 
 test: xxhsum
-	./xxhsum -b bench.c
-	valgrind ./xxhsum -bi1 bench.c
-	valgrind ./xxhsum -H0 bench.c
-	valgrind ./xxhsum -H1 bench.c
+	./xxhsum < xxhash.c
+	./xxhsum -b xxhash.c
+	valgrind --leak-check=yes ./xxhsum -bi1 xxhash.c
+	valgrind --leak-check=yes ./xxhsum -H0 xxhash.c
+	valgrind --leak-check=yes ./xxhsum -H1 xxhash.c
 
 test-all: test xxhsum32
-	./xxhsum32 -b bench.c
+	./xxhsum32 -b xxhash.c
 
 clean:
 	@rm -f core *.o xxhsum$(EXT) xxhsum32$(EXT) xxh32sum xxh64sum
